@@ -1,18 +1,17 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 # 1. POINT TO THE BASE
 # This path goes up two directories (out of prod, out of stages) and into base
 resources:
-  - ../../base
-
+- ../../base
 # 2. APPLY STAGE-SPECIFIC OVERRIDES
 # Kustomize will automatically deploy these resources into the 'prod' namespace
 namespace: prod
-
 # You can optionally add a prefix to all resource names
 namePrefix: prod-
-
 # You can override common labels to identify the environment
 commonLabels:
   environment: prod
+images:
+- name: public.ecr.aws/nginx/nginx
+  newTag: 1.31.2
