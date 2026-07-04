@@ -1,0 +1,107 @@
+# 1. The Project Scope
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: kargo-poc
+
+---
+# 2. The Artifact Warehouse (Listens for updates)
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: app-warehouse
+  namespace: kargo-poc
+spec:
+  subscriptions:
+    # Here we listen to a public image registry for updates. 
+    # For this PoC, we watch a sample container image.
+    - image:
+        repo: public.ecr.aws/nginx/nginx
+        semverConstraint: "^1.25"
+        discoveryLimit: 5
+
+---
+# 3. The Development Stage (Auto-promotes from Warehouse)
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: kargo-poc
+spec:
+  requestedFreight:
+    - origin:
+        warehouse: app-warehouse
+      sources:
+        direct: true
+  # Auto-promotion tells Kargo to instantly push new tags to Dev
+  promotionMechanisms:
+    autoPromotionMechanisms:
+      - origin:
+          warehouse: app-warehouse
+    gitRepoUpdates:
+      - repoURL: 'https://github.com/malek7x/kargo-ops.git'
+        writeBranch: main
+        kustomize:
+          images:
+            # Matches the placeholder image in your base/deployment.yaml
+            - image: public.ecr.aws/nginx/nginx
+              path: stages/dev
+  # Binds this stage directly to your Argo CD application executor
+  argoCDAppUpdates:
+    - appName: poc-dev
+      appNamespace: argocd
+
+---
+# 4. The Staging Stage (Requires verification in Dev)
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging
+  namespace: kargo-poc
+spec:
+  requestedFreight:
+    - origin:
+        warehouse: app-warehouse
+      sources:
+        stages:
+          - dev # Pulls ONLY freight that successfully cleared Dev
+  promotionMechanisms:
+    gitRepoUpdates:
+      - repoURL: 'https://github.com/malek7x/kargo-ops.git'
+        writeBranch: main
+        kustomize:
+          images:
+            - image: public.ecr.aws/nginx/nginx
+              path: stages/staging
+  argoCDAppUpdates:
+    - appName: poc-staging
+      appNamespace: argocd
+
+---
+# 5. The Production Stage (Requires verification in Staging)
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: kargo-poc
+spec:
+  requestedFreight:
+    - origin:
+        warehouse: app-warehouse
+      sources:
+        stages:
+          - staging # Pulls ONLY freight that successfully cleared Staging
+  promotionMechanisms:
+    gitRepoUpdates:
+      - repoURL: 'https://github.com/malek7x/kargo-ops.git'
+        writeBranch: main
+        kustomize:
+          images:
+            - image: public.ecr.aws/nginx/nginx
+              path: stages/prod
+  argoCDAppUpdates:
+    - appName: poc-prod
+      appNamespace: argocd
+
+
+      
