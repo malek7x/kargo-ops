@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# 1. POINT TO THE BASE
+# This path goes up two directories (out of dev, out of stages) and into base
+resources:
+  - ../../base
+
+# 2. APPLY STAGE-SPECIFIC OVERRIDES
+# Kustomize will automatically deploy these resources into the 'dev' namespace
+namespace: dev
+
+# You can optionally add a prefix to all resource names
+namePrefix: dev-
+
+# You can override common labels to identify the environment
+commonLabels:
+  environment: dev
