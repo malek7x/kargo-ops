@@ -6,9 +6,9 @@ resources:
 - ../../base
 # 2. APPLY STAGE-SPECIFIC OVERRIDES
 # Kustomize will automatically deploy these resources into the 'stg' namespace
-namespace: stg
+namespace: staging
 # You can optionally add a prefix to all resource names
-namePrefix: stg-
+namePrefix: staging-
 # You can override common labels to identify the environment
 commonLabels:
   environment: stg
