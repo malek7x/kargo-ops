@@ -14,4 +14,4 @@ commonLabels:
   environment: stg
 images:
 - name: public.ecr.aws/nginx/nginx
-  newTag: 1.31.2-trixie-perl
+  newTag: 1.31.2
